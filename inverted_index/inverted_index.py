@@ -139,22 +139,24 @@ class InvertedIndex:
             result.intersection_update(set(index_list))
         return list(result)
 
-    def dump(self, filepath: str) -> None:
+    def dump(self, policy: StoragePolicy, filepath: str) -> None:
         """
         Save class index on disc by given path
+        :param policy: policy for data dump
         :param filepath: path to save a data
         :return: Nothing
         """
-        StructStoragePolicy.dump(filepath, self._index)
+        policy.dump(filepath, self._index)
 
     @classmethod
-    def load(cls, filepath: str):
+    def load(cls, policy: StoragePolicy, filepath: str):
         """
         Upload index from disc and construct InvertedIndex class
+        :param policy: policy for data load
         :param filepath: path to file with data
         :return: Class built by data in given filename
         """
-        index = StructStoragePolicy.load(filepath)
+        index = policy.load(filepath)
         return InvertedIndex(index)
 
 
@@ -194,7 +196,7 @@ def callback_build(arguments):
     """
     documents = load_documents(arguments.load_path)
     inverted_index = build_inverted_index(documents)
-    inverted_index.dump(arguments.store_path)
+    inverted_index.dump(StructStoragePolicy(), arguments.store_path)
 
 
 def callback_query(arguments):
@@ -209,7 +211,7 @@ def callback_query(arguments):
     else:
         for row in arguments.query_file:
             words.append(row.rstrip())
-    inverted_index = InvertedIndex.load(arguments.index_path)
+    inverted_index = InvertedIndex.load(StructStoragePolicy(), arguments.index_path)
     print(",".join([str(var) for var in inverted_index.query(words)]))
 
 
