@@ -128,16 +128,16 @@ class InvertedIndex:
         :param words: list of words for search
         :return documents where all of words are presented together
         """
-        tmp = list()
+        tmp = None
         for word in words:
             if word in self._index:
-                tmp.append(self._index[word])
-        if len(tmp) == 0:
-            return list()
-        result = set(tmp[0])
-        for index_list in tmp:
-            result.intersection_update(set(index_list))
-        return list(result)
+                if tmp is None:
+                    tmp = set(self._index[word])
+                else:
+                    tmp.intersection_update(set(self._index[word]))
+            else:
+                return list()
+        return list(tmp)
 
     def dump(self, policy: StoragePolicy, filepath: str) -> None:
         """
@@ -169,7 +169,7 @@ def load_documents(filepath: str):
     documents = {}
     with open(filepath, 'r') as fin:
         for row in fin:
-            row = row.rstrip().split()
+            row = row.strip().split()
             documents[int(row[0])] = " ".join(row[1:])
     return documents
 
@@ -205,14 +205,12 @@ def callback_query(arguments):
     :param arguments: command line arguments
     :return: Nothing
     """
-    words = []
+    inverted_index = InvertedIndex.load(StructStoragePolicy(), arguments.index_path)
     if arguments.query:
-        words.extend(arguments.query)
+        print(",".join([str(var) for var in inverted_index.query(arguments.query)]))
     else:
         for row in arguments.query_file:
-            words.append(row.rstrip())
-    inverted_index = InvertedIndex.load(StructStoragePolicy(), arguments.index_path)
-    print(",".join([str(var) for var in inverted_index.query(words)]))
+            print(",".join([str(var) for var in inverted_index.query(row.strip().split())]))
 
 
 def setup_parser(parser: argparse.ArgumentParser) -> None:

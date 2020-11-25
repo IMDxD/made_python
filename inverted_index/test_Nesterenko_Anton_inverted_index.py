@@ -9,18 +9,18 @@ from task_Nesterenko_Anton_inverted_index import InvertedIndex, load_documents, 
 
 
 DATASET_SMALL_STR = dedent("""\
-    12	Anarchism Anarchism is often defined as a political philosophy which holds the state to be undesirable.
-    25	Autism Autism is a disorder of neural development characterized by impaired social interaction
-    39	Albedo Albedo, or reflection coefficient, derived from Latin albedo "whiteness" (or reflected sunlight)
-    290	A  A (named a  , plural aes ) is the first letter and vowel in the ISO basic Latin alphabet.
+    12\tAnarchism Anarchism is often defined as a political philosophy which holds the state to be undesirable.
+    25\tAutism Autism is a disorder of neural development characterized by impaired social interaction
+    39\tAlbedo Albedo, or reflection coefficient, derived from Latin albedo "whiteness" (or reflected sunlight)
+    290\tA  A (named a  , plural aes ) is the first letter and vowel in the ISO basic Latin alphabet.
 """)
 
 DATASET_TINY_STR = dedent("""\
-    123 Show must go on!
-    321 Still loving you
-    547 The Adventures of Rain Dance Maggie
-    645 The House of Rising Son
-    789 A A B
+    123\tShow must go on!
+    321\tStill loving you
+    547\tThe Adventures of Rain Dance Maggie
+    645\tThe House of Rising Son
+    789\tA A B
 """)
 
 ETALON_TINY_INDEX = {
@@ -197,8 +197,7 @@ def test_callback_query_utf8(tiny_dataset_fio, tmpdir, capsys, query, answer):
     inverted_index.dump(StructStoragePolicy(), tmp_fio)
     tmp_file = tmpdir.join('test.utf8')
     with open(tmp_file, "w", encoding="utf8") as file:
-        for line in query:
-            file.write(line + "\n")
+        file.write(" ".join(query) + "\n")
     arguments = Namespace(
         query=[],
         query_file=open(tmp_file, "r", encoding="utf8"),
@@ -229,8 +228,7 @@ def test_callback_query_cp1251(tiny_dataset_fio, tmpdir, capsys, query, answer):
     inverted_index.dump(StructStoragePolicy(), tmp_fio)
     tmp_file = tmpdir.join('test.cp1251')
     with open(tmp_file, "w", encoding="cp1251") as file:
-        for line in query:
-            file.write(line + "\n")
+        file.write(" ".join(query) + "\n")
     arguments = Namespace(
         query=[],
         query_file=open(tmp_file, "r", encoding="cp1251"),
