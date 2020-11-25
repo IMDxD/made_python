@@ -4,8 +4,8 @@ from textwrap import dedent
 
 import pytest
 
-from inverted_index import InvertedIndex, load_documents, build_inverted_index, StructStoragePolicy, \
-    callback_query, callback_build
+from task_Nesterenko_Anton_inverted_index import InvertedIndex, load_documents, \
+    build_inverted_index, StructStoragePolicy, callback_query, callback_build
 
 
 DATASET_SMALL_STR = dedent("""\
