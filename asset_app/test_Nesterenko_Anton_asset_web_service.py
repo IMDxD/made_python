@@ -121,8 +121,8 @@ def test_bank_get_json():
     asset1 = Asset("Petya", 12, 13, "USD")
     asset2 = Asset("Masha", 0, 1, "EU")
     result = [
-        ["USD", "Petya", "12", "13"],
-        ["EU", "Masha", "0", "1"]
+        ["USD", "Petya", 12, 13],
+        ["EU", "Masha", 0, 1]
     ]
     bank = Bank([asset1, asset2])
     gotten = bank.get_json()
@@ -296,8 +296,8 @@ def test_api_asset_list(client):
         Asset("Masha", 0, 1, "EU")
     ])
     result = [
-        ["USD", "Petya", "12", "13"],
-        ["EU", "Masha", "0", "1"]
+        ["USD", "Petya", 12, 13],
+        ["EU", "Masha", 0, 1]
     ]
     response = client.get("/api/asset/list")
     assert response.json == result,  f"Wrong result expected: {result}, got: {response.json}"
@@ -368,9 +368,9 @@ def test_calculate_revenue_api(mock_get, route, periods, client):
         Asset("Vasya", 2, 43, "AZN"),
         Asset("Lesha", 50, 61, "AMD"),
     ])
-    result = defaultdict(str)
+    result = dict()
     for period in periods:
-        result[str(period)] = str(client.application.bank.total_revenue(period, interest, daily))
+        result[str(period)] = client.application.bank.total_revenue(period, interest, daily)
     response = client.get(route)
     mock_get.called_once(INTEREST_KEY_URL)
     mock_get.called_once(DAILY_URL)

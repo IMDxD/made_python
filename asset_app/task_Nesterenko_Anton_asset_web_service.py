@@ -96,7 +96,7 @@ class Bank:
         """
         result = []
         for item in self.asset_list:
-            result.append([item.char_code, item.name, str(item.capital), str(item.interest)])
+            result.append([item.char_code, item.name, item.capital, item.interest])
         return result
 
     def clear(self):
@@ -294,17 +294,15 @@ def asset_calc_revenue_api():
     Api to calculate revenue by given periods
     :return: json of dict period to revenue
     """
-    data = defaultdict(str)
+    data = dict()
     periods = request.args.getlist('period')
     cbr_interest_response = requests.get(INTEREST_KEY_URL)
     cbr_daily_response = requests.get(DAILY_URL)
     interest_map = parse_cbr_key_indicators(cbr_interest_response.text)
     daily_map = parse_cbr_currency_base_daily(cbr_daily_response.text)
     for period in periods:
-        data[period] = str(
-            app.bank.total_revenue(
-                period=int(period),
-                key_interest_map=interest_map,
-                daily_map=daily_map)
-        )
+        data[int(period)] = app.bank.total_revenue(
+            period=int(period),
+            key_interest_map=interest_map,
+            daily_map=daily_map)
     return jsonify(data)
