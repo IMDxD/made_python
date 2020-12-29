@@ -2,7 +2,6 @@
 """
 Web service for asset application
 """
-import logging
 from collections import defaultdict
 from typing import Any, Dict, List, Union
 
@@ -138,7 +137,6 @@ class Bank:
         return result
 
 
-logger = logging.getLogger("asset")
 app = Flask(__name__)
 app.bank = Bank()
 
