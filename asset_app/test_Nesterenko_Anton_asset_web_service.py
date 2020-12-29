@@ -21,9 +21,9 @@ def test_asset_init():
 @pytest.mark.parametrize(
     "years, result",
     [
-        pytest.param(1, 12 * ((1.0 + 0.5) ** 1 - 1.0)),
-        pytest.param(5, 12 * ((1.0 + 0.5) ** 5 - 1.0)),
-        pytest.param(10, 12 * ((1.0 + 0.5) ** 10 - 1.0))
+        pytest.param(1, 12 * (1.005 ** 1 - 1.0)),
+        pytest.param(5, 12 * (1.005 ** 5 - 1.0)),
+        pytest.param(10, 12 * (1.005 ** 10 - 1.0))
     ]
 )
 def test_asset_calc_revenue(years, result):

@@ -38,7 +38,7 @@ class Asset:
         :param years: period for calc
         :return: revenue of asset by given period
         """
-        revenue = self.capital * ((1.0 + self.interest) ** years - 1.0)
+        revenue = self.capital * ((1 + self.interest / 100) ** years - 1.0)
         return revenue
 
     def __repr__(self):
