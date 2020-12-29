@@ -2,14 +2,13 @@
 """
 Web service for asset application
 """
-from collections import defaultdict
 import logging
-import requests
+from collections import defaultdict
 from typing import Any, Dict, List, Union
 
+import requests
 from bs4 import BeautifulSoup
 from flask import Flask, Response, jsonify, make_response, request
-
 
 DAILY_URL = "https://www.cbr.ru/eng/currency_base/daily/"
 INTEREST_KEY_URL = "https://www.cbr.ru/eng/key-indicators/"
@@ -57,8 +56,7 @@ class Asset:
         """
         if isinstance(other, Asset):
             return self.name < other.name
-        else:
-            raise ValueError(f"Can't compare Asset and {other.__class__.__name__}")
+        raise ValueError(f"Can't compare Asset and {other.__class__.__name__}")
 
 
 class Bank:
@@ -253,9 +251,8 @@ def add_asset_api(char_code: str, name: str, capital: int, interest: int) -> Res
     )
     if app.bank.contains(new_asset):
         return make_response("Name has already exist", 403)
-    else:
-        app.bank.add(new_asset)
-        return make_response(f"Asset '{name}' was successfully added", 200)
+    app.bank.add(new_asset)
+    return make_response(f"Asset '{name}' was successfully added", 200)
 
 
 @app.route("/asset/cleanup")
