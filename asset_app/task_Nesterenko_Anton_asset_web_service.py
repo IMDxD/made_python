@@ -2,7 +2,6 @@
 """
 Web service for asset application
 """
-from collections import defaultdict
 from typing import Any, Dict, List, Union
 
 import requests

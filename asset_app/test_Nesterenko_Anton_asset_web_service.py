@@ -1,6 +1,6 @@
 import pytest
 from unittest.mock import patch
-from collections import defaultdict, namedtuple
+from collections import namedtuple
 from task_Nesterenko_Anton_asset_web_service import \
     Asset, Bank, DAILY_URL, INTEREST_KEY_URL, app as test_app, cbr_float, \
     parse_cbr_currency_base_daily, parse_cbr_key_indicators
