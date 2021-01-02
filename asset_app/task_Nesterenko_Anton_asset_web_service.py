@@ -2,6 +2,7 @@
 """
 Web service for asset application
 """
+import bisect
 from typing import Any, Dict, List, Union
 
 import requests
@@ -35,7 +36,7 @@ class Asset:
         :param years: period for calc
         :return: revenue of asset by given period
         """
-        revenue = self.capital * ((1 + self.interest / 100) ** years - 1.0)
+        revenue = self.capital * ((1 + self.interest) ** years - 1.0)
         return revenue
 
     def __repr__(self):
@@ -56,6 +57,14 @@ class Asset:
             return self.name < other.name
         raise ValueError(f"Can't compare Asset and {other.__class__.__name__}")
 
+    def get_json(self):
+        return [
+            self.char_code,
+            self.name,
+            self.capital,
+            self.interest
+        ]
+
 
 class Bank:
 
@@ -68,14 +77,15 @@ class Bank:
         """
         self.asset_list = list()
         if asset_list:
-            self.asset_list.extend(asset_list)
+            for item in asset_list:
+                bisect.insort_left(self.asset_list, item)
 
     def add(self, item: Asset):
         """
         Add asset to bank
         :return: Nothing
         """
-        self.asset_list.append(item)
+        bisect.insort_left(self.asset_list, item)
 
     def contains(self, item: Asset) -> bool:
         """
@@ -83,9 +93,9 @@ class Bank:
         :param item: item to check
         :return: True if item contains else False
         """
-        for asset in self.asset_list:
-            if asset.name == item.name:
-                return True
+        i = bisect.bisect_left(self.asset_list, item)
+        if i != len(self.asset_list) and self.asset_list[i].name == item.name:
+            return True
         return False
 
     def get_json(self) -> List[List[Any]]:
@@ -95,7 +105,7 @@ class Bank:
         """
         result = []
         for item in self.asset_list:
-            result.append([item.char_code, item.name, item.capital, item.interest])
+            bisect.insort_left(result, item.get_json())
         return result
 
     def clear(self):
@@ -111,9 +121,9 @@ class Bank:
         :param name: name of asset
         :return: list repr
         """
-        for item in self.asset_list:
-            if item.name == name:
-                return [item.char_code, item.name, item.capital, item.interest]
+        i = bisect.bisect_left(self.asset_list, Asset(name, 0, 0, "US"))
+        if i != len(self.asset_list) and self.asset_list[i].name == name:
+            return self.asset_list[i].get_json()
         return []
 
     def total_revenue(self, period: int,
@@ -230,8 +240,8 @@ def cbr_interest_key_api() -> Response:
     return jsonify(result)
 
 
-@app.route("/api/asset/add/<string:char_code>/<string:name>/<int:capital>/<int:interest>")
-def add_asset_api(char_code: str, name: str, capital: int, interest: int) -> Response:
+@app.route("/api/asset/add/<string:char_code>/<string:name>/<string:capital>/<string:interest>")
+def add_asset_api(char_code: str, name: str, capital: str, interest: str) -> Response:
     """
     Api to add asset
     :param char_code: char code of asset
@@ -242,8 +252,8 @@ def add_asset_api(char_code: str, name: str, capital: int, interest: int) -> Res
     """
     new_asset = Asset(
         name=name,
-        capital=capital,
-        interest=interest,
+        capital=float(capital),
+        interest=float(interest),
         char_code=char_code
     )
     if app.bank.contains(new_asset):
@@ -252,7 +262,7 @@ def add_asset_api(char_code: str, name: str, capital: int, interest: int) -> Res
     return make_response(f"Asset '{name}' was successfully added", 200)
 
 
-@app.route("/asset/cleanup")
+@app.route("/api/asset/cleanup")
 def clear_api():
     """
     Api for bank cleanup
@@ -284,7 +294,7 @@ def asset_get_api():
         asset = app.bank.get(name)
         if asset:
             data.append(asset)
-    return jsonify(data)
+    return jsonify(sorted(data))
 
 
 @app.route("/api/asset/calculate_revenue")

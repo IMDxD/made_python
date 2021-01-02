@@ -21,9 +21,9 @@ def test_asset_init():
 @pytest.mark.parametrize(
     "years, result",
     [
-        pytest.param(1, 12 * (1.005 ** 1 - 1.0)),
-        pytest.param(5, 12 * (1.005 ** 5 - 1.0)),
-        pytest.param(10, 12 * (1.005 ** 10 - 1.0))
+        pytest.param(1, 12 * (1.5 ** 1 - 1.0)),
+        pytest.param(5, 12 * (1.5 ** 5 - 1.0)),
+        pytest.param(10, 12 * (1.5 ** 10 - 1.0))
     ]
 )
 def test_asset_calc_revenue(years, result):
@@ -64,7 +64,7 @@ def test_asset_repr():
         pytest.param([Asset("Vasya", 12, 12, "USD"),
                       Asset("Petya", 32, 1, "USD"),
                       Asset("Masha", 0, 0, "USD")],
-                     ["Vasya", "Petya", "Masha"]),
+                     sorted(["Vasya", "Petya", "Masha"])),
         pytest.param(None, [])
     ]
 )
@@ -78,7 +78,7 @@ def test_bank_append():
     item = Asset("Vasya", 12, 12, "USD")
     asset1 = Asset("Petya", 12, 12, "USD")
     asset2 = Asset("Masha", 0, 0, "USD")
-    expected = ["Petya", "Masha", "Vasya"]
+    expected = sorted(["Petya", "Masha", "Vasya"])
     bank = Bank([asset1, asset2])
     bank.add(item)
     bank_names = [var.name for var in bank.asset_list]
@@ -121,8 +121,8 @@ def test_bank_get_json():
     asset1 = Asset("Petya", 12, 13, "USD")
     asset2 = Asset("Masha", 0, 1, "EU")
     result = [
-        ["USD", "Petya", 12, 13],
-        ["EU", "Masha", 0, 1]
+        ["EU", "Masha", 0, 1],
+        ["USD", "Petya", 12, 13]
     ]
     bank = Bank([asset1, asset2])
     gotten = bank.get_json()
@@ -196,6 +196,7 @@ def test_parse_cbr_key_indicators():
 def test_cbr_daily_api(mock_get, client):
     with open("test_data/cbr_daily.html", "r", encoding="utf8") as fs:
         mock_get.return_value.text = fs.read()
+    mock_get.return_value.status_code = 200
     expected = {
         "AUD": 57.0229,
         "AZN": 44.4127,
@@ -221,6 +222,7 @@ def test_cbr_daily_api_unavailable(mock_get, client):
 def test_cbr_key_indicator_api(mock_get, client):
     with open("test_data/cbr_indicator.html", "r", encoding="utf8") as fs:
         mock_get.return_value.text = fs.read()
+    mock_get.return_value.status_code = 200
     expected = {
         "USD": 75.4571,
         "EUR": 91.9822,
@@ -248,22 +250,22 @@ def test_cbr_key_indicator_api_unavailable(mock_get, client):
 @pytest.mark.parametrize(
     "route, result, length",
     [
-        pytest.param("/api/asset/add/EU/Vasya/12/12", ("Vasya", 12, 12, "EU"), 1),
-        pytest.param("/api/asset/add/USD/Masha/1/1", ("Masha", 1, 1, "USD"), 2)
+        pytest.param("/api/asset/add/EU/Vasya/12/12.0", ("Vasya", 12.0, 12.0, "EU"), 1),
+        pytest.param("/api/asset/add/USD/Masha/1.0/1.0", ("Masha", 1.0, 1.0, "USD"), 2)
     ]
 )
 def test_add_asset_api(route, result, length, client):
     response = client.get(route)
     asset = (
-        client.application.bank.asset_list[-1].name,
-        client.application.bank.asset_list[-1].capital,
-        client.application.bank.asset_list[-1].interest,
-        client.application.bank.asset_list[-1].char_code
+        client.application.bank.asset_list[0].name,
+        client.application.bank.asset_list[0].capital,
+        client.application.bank.asset_list[0].interest,
+        client.application.bank.asset_list[0].char_code
     )
     banks_cnt = len(client.application.bank.asset_list)
     message = f"Asset '{asset[0]}' was successfully added"
     assert response.status_code == 200, f"Wrong status code, expected 200, got {response.status_code}"
-    assert response.data.decode() == message, f"Wrong message, expected {message}, got {result.data.decode()}"
+    assert response.data.decode() == message, f"Wrong message, expected {message}, got {response.data.decode()}"
     assert asset == result, f"Wrong result expected: {result}, got: {asset}"
     assert banks_cnt == length, f"Wrong bank count, expected {length}, got {banks_cnt}"
 
@@ -273,7 +275,7 @@ def test_api_clear(client):
         Asset("Petya", 12, 13, "USD"),
         Asset("Masha", 0, 1, "EU")
     ])
-    response = client.get("/asset/cleanup")
+    response = client.get("/api/asset/cleanup")
     message = "Successfully cleared"
     banks_cnt = len(client.application.bank.asset_list)
     assert response.status_code == 200, f"Wrong status code, expected 200, got {response.status_code}"
@@ -283,8 +285,8 @@ def test_api_clear(client):
 
 def test_add_asset_api_contains(client):
     client.application.bank = Bank()
-    client.get("/api/asset/add/EU/Vasya/12/12")
-    response = client.get("/api/asset/add/EU/Vasya/12/12")
+    client.get("/api/asset/add/EU/Vasya/12.0/12.0")
+    response = client.get("/api/asset/add/EU/Vasya/12.0/12.0")
     banks_cnt = len(client.application.bank.asset_list)
     assert response.status_code == 403, f"Wrong status code, expected 200, got {response.status_code}"
     assert banks_cnt == 1, f"Wrong bank count, expected 1, got {banks_cnt}"
@@ -293,11 +295,13 @@ def test_add_asset_api_contains(client):
 def test_api_asset_list(client):
     client.application.bank = Bank([
         Asset("Petya", 12, 13, "USD"),
-        Asset("Masha", 0, 1, "EU")
+        Asset("Masha", 0, 1, "EU"),
+        Asset("Vasya", 0, 1, "ARM")
     ])
     result = [
-        ["USD", "Petya", 12, 13],
-        ["EU", "Masha", 0, 1]
+        ["ARM", "Vasya", 0, 1],
+        ["EU", "Masha", 0, 1],
+        ["USD", "Petya", 12, 13]
     ]
     response = client.get("/api/asset/list")
     assert response.json == result,  f"Wrong result expected: {result}, got: {response.json}"
@@ -343,11 +347,11 @@ def test_api_asset_get(route, result, client):
 )
 def test_calculate_revenue_api(mock_get, route, periods, client):
     side_effect = []
-    return_value = namedtuple("return_value", ["text"])
+    return_value = namedtuple("return_value", ["text", "status_code"])
     with open("test_data/cbr_indicator.html", "r", encoding="utf8") as fs:
-        side_effect.append(return_value(fs.read(),))
+        side_effect.append(return_value(fs.read(), 200))
     with open("test_data/cbr_daily.html", "r", encoding="utf8") as fs:
-        side_effect.append(return_value(fs.read(),))
+        side_effect.append(return_value(fs.read(), 200))
     mock_get.side_effect = side_effect
     daily = {
         "AUD": 57.0229,
